@@ -14,7 +14,7 @@ def frame_resize(img, init_h, init_v, h, v, method):
         init_v, init_h = img.shape[:2]
         max_v = max(init_v, v)
         max_h = max(init_h, h)
-        virtual = np.zeros((max_v, max_h, 3), dtype = np.uint8)
+        virtual = np.zeros((max_v, max_h, 3), dtype=np.uint8)
         start_v, start_h = int((max_v-init_v)/2), int((max_h-init_h)/2)
         virtual[start_v:start_v + init_v, start_h:start_h + init_h, :] = img
         start_v, start_h = int((max_v-v)/2), int((max_h-h)/2)

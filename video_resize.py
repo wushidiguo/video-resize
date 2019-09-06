@@ -12,6 +12,7 @@ class MainWindow(Ui_MainWindow, QtWidgets.QMainWindow):
         super(MainWindow, self).__init__()
         self.setupUi(self)
         self.setWindowTitle("Video Resize")
+        self.setWindowIcon(QtGui.QIcon("icon.ico"))
         self.save.clicked.connect(self.file_save)
         self.preview.clicked.connect(self.resized_preview)
         self.open.clicked.connect(self.file_open)
@@ -19,17 +20,16 @@ class MainWindow(Ui_MainWindow, QtWidgets.QMainWindow):
         self.v_size.setText("2061")
         self.v_size.setValidator(QtGui.QIntValidator())
         self.h_size.setValidator(QtGui.QIntValidator())
-        self.cap = None
+        self.file = None
 
     def file_open(self):
-        file, _ = QtWidgets.QFileDialog.getOpenFileName(self, "select a file", "", "MOV (*.mov);; MPEG-4 (*.mp4);; AVI (*.avi);; All (*.mov *.mp4 *.avi *.mkv)")
-        self.cap = cv2.VideoCapture(file)
-        filepath, filename = os.path.split(file)
+        self.file, _ = QtWidgets.QFileDialog.getOpenFileName(self, "select a file", "", "MOV (*.mov);; MPEG-4 (*.mp4);; AVI (*.avi);; All (*.mov *.mp4 *.avi *.mkv)")
+        filepath, filename = os.path.split(self.file)
         basename, extension = os.path.splitext(filename)
-        self.default_name = os.path.join(filepath, basename+"_Resized")
-        self.default_name = self.default_name.replace("/", "\\")
+        self.default_name = os.path.join(filepath, basename+"_Resized").replace("/", "\\")
 
-    def video_resize(self):
+    def video_resize(self, isSave = False):
+        self.cap = cv2.VideoCapture(self.file)
         frame_width = int(self.cap.get(3))
         frame_height = int(self.cap.get(4))
         frame_count = int(self.cap.get(7))
@@ -37,42 +37,55 @@ class MainWindow(Ui_MainWindow, QtWidgets.QMainWindow):
         h = int(self.h_size.text())
         v = int(self.v_size.text())
         method = self.comboBox.currentText()
-        self.process_bar = QtWidgets.QProgressBar(self)
-        self.process_bar.setMinimum(0)
-        self.process_bar.setMaximum(frame_count)
-        self.process_bar.show()
-        if self.codec == "MPEG (*.mp4)":
-            fourcc = cv2.VideoWriter_fourcc(*"mpeg")
+        if isSave:
+            self.progressBar.setMaximum(frame_count)
+            output_file = cv2.VideoWriter(self.save_filename, -1, frame_rate, (h, v))
+            position = 0
         else:
-            fourcc = cv2.VideoWriter_fourcc(*"XVID")
-        output_file = cv2.VideoWriter(self.save_filename, fourcc, frame_rate, (h, v))
-        position = 0
+            cv2.namedWindow("Preview", cv2.WINDOW_NORMAL | cv2.WINDOW_KEEPRATIO)
         while self.cap.isOpened():
             ret, frame = self.cap.read()
             if ret:
                 new_frame = frame_resize(frame, frame_width, frame_height, h, v, method)
-                output_file.write(new_frame)
-                position += 1
-                self.process_bar_value(position, frame_count)
-                QtGui.QGuiApplication.processEvents()
+                if isSave:
+                    output_file.write(new_frame)
+                    position += 1
+                    self.process_bar_value(position, frame_count)
+                    QtGui.QGuiApplication.processEvents()
+                    wait_time = 1
+                else:
+                    cv2.imshow("Preview", new_frame)
+                    wait_time = int(1000/frame_rate)
+            else:
+                break
+            key = cv2.waitKey(wait_time)
+            if not isSave:
+                if key == 27:
+                    break
+                elif key == 32:
+                    cv2.setWindowProperty("Preview", cv2.WND_PROP_FULLSCREEN, cv2.WINDOW_FULLSCREEN)
         self.cap.release()
-        output_file.release()
+        if isSave:
+            output_file.release()
+        else:
+            cv2.destroyAllWindows()
 
     def file_save(self):
-        if not self.cap:
+        if not self.file:
             QtWidgets.QMessageBox.information(self, "Information", "Please select a file first.")
         else:
-            self.save_filename, self.codec = QtWidgets.QFileDialog.getSaveFileName(self, "save file", self.default_name, "MPEG (*.mp4);;Mov (*.mov)")
+            self.save_filename, _ = QtWidgets.QFileDialog.getSaveFileName(self, "save file", self.default_name, "MPEG (*.mp4);;Mov (*.mov)")
             if self.save_filename:
-                self.video_resize()
+                self.video_resize(True)
 
     def resized_preview(self):
-        pass
+        if self.file:
+            self.video_resize(False)
 
     def process_bar_value(self, value, count):
-        self.process_bar.setValue(value)
+        self.progressBar.setValue(value)
         if value == count:
-            self.process_bar.hide()
+            self.progressBar.setValue(0)
             QtWidgets.QMessageBox.information(self, "Information", "Resize finished")
 
 
