@@ -7,3 +7,5 @@ A little tool for video resizing.
 
 If it's not clear about which one to use, just preview before run.
 
+exe version:
+https://pan.baidu.com/s/171AyIZvKKX0IPOPXrQeUXQ
