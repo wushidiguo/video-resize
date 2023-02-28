@@ -1,11 +1,9 @@
 # video-resize
-A little tool for video resizing.
+A little tool to output resized video.
 
-"Resize Only" : Literally, resize only, do not keep aspectratio.
+"Resize Only" : do not keep aspectratio.
 
-"Resize to Width" & "Resize to Height" : Keep aspectratio. The difference between the two is which ratio to follow, width or height. The redundant will be left over and the short will be filled in black.
-
-If it's not clear about which one to use, just preview before run.
+"Resize to Width" & "Resize to Height" : Keep aspectratio.
 
 exe version:
 https://pan.baidu.com/s/171AyIZvKKX0IPOPXrQeUXQ
